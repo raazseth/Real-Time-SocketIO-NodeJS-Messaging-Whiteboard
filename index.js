@@ -16,19 +16,22 @@ app.use(cors({ origin: "*" }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const drawingData = {};
-
 //Establishing socket connection
 io.on("connection", (socket) => {
-  socket.on("create-session", () => {
+  socket.on("create-session", (name) => {
     const sessionId = uuidv4();
     socket.join(sessionId);
-    socket.emit("session-created", sessionId);
+    socket.emit("session-created", sessionId, name);
   });
 
-  socket.on("join-session", (sessionId) => {
-    socket.join(sessionId);
-    socket.emit("session-joined", sessionId);
+  socket.on("join-session", (data) => {
+    socket.join(data.id);
+    socket.emit("session-joined", data);
+  });
+
+
+  socket.on('message', (data) => {
+    io.emit('message', data);
   });
 
   socket.on("draw", (data) => {
@@ -52,7 +55,6 @@ io.on("connection", (socket) => {
     console.log("Client disconnected");
   });
 });
-
 
 // Connect to the PostgreSQL database
 sequelize.authenticate().then(async () => {
